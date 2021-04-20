@@ -1,2 +1,2 @@
 # ethereum-store
-Etherium Store test task
+Ethereum Store test task
