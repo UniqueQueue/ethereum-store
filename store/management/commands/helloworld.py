@@ -1,10 +1,12 @@
+from itertools import count
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
+from store import initialization
 from store.models import Good, Offer, Purchase
 from store.models import Order
-from store.initialization import delete_models, populate_models
 
 
 def _get_groups():
@@ -44,7 +46,7 @@ def _create_users(*, groups):
 def _create_goods():
     goods = {}
 
-    for idx in range(1, 10):
+    for idx in range(1, 16 + 1):
         goods[f'good_{idx}'], created = Good.objects.get_or_create(name=f'good {idx}')
 
     return goods
@@ -53,10 +55,10 @@ def _create_goods():
 def _create_offers(*, goods):
     offers = {}
 
-    for idx in range(5, 10):
+    for idx in range(1, 10):
         good = goods[f'good_{idx}']
         price = idx
-        offers[f'offer_{idx}'], created = Offer.objects.get_or_create(good=good, price=price)
+        offers[f'offer_{idx}'], created = Offer.objects.get_or_create(good=good, price=price, enabled=idx > 5)
 
     return offers
 
@@ -64,7 +66,7 @@ def _create_offers(*, goods):
 def _create_purchases(*, goods):
     purchases = {}
 
-    for idx in range(1, 7):
+    for idx in range(1, 16 + 1):
         good = goods[f'good_{idx}']
         price = idx
         purchases[f'purchase_{idx}'], created = Purchase.objects.get_or_create(good=good, price=price)
@@ -75,15 +77,18 @@ def _create_purchases(*, goods):
 def _create_orders(*, users, purchases):
     orders = {}
 
-    orders['order 1'], created = Order.objects.get_or_create(
-        user=users['buyer'], email='buyer@mail.ru', status=Order.Status.DRAFT)
-    orders['order 1'].purchases.set([purchases['purchase_1'], purchases['purchase_2']])
-    orders['order 1'].save()
+    pidx = count(1)  # purchase index
+    for idx, status in enumerate(Order.Status.values):
+        orders[f'order {idx}'], created = Order.objects.get_or_create(
+            user=users['buyer'], email='buyer@mail.ru', status=status)
+        orders[f'order {idx}'].purchases.set([purchases[f'purchase_{next(pidx)}'], purchases[f'purchase_{next(pidx)}']])
+        orders[f'order {idx}'].save()
 
-    orders['order 2'], created = Order.objects.get_or_create(
-        user=users['moderator'], email='moderator@mail.ru', status=Order.Status.PROCESSING)
-    orders['order 2'].purchases.set([purchases['purchase_3'], purchases['purchase_4']])
-    orders['order 2'].save()
+    for idx, status in enumerate(Order.Status.values):
+        orders[f'order {idx}'], created = Order.objects.get_or_create(
+            user=users['moderator'], email='moderator@mail.ru', status=status)
+        orders[f'order {idx}'].purchases.set([purchases[f'purchase_{next(pidx)}'], purchases[f'purchase_{next(pidx)}']])
+        orders[f'order {idx}'].save()
 
     return orders
 
@@ -99,8 +104,8 @@ class Command(BaseCommand):
             parser.add_argument(*args, **kwargs)
 
     def handle(self, *args, **options):
-        delete_models(self)
-        populate_models(self)
+        initialization.delete_models(self)
+        initialization.populate_models(self)
 
         groups = _get_groups()
         users = _create_users(groups=groups)

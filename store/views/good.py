@@ -43,5 +43,6 @@ class GoodsAccessPolicy(AccessPolicy):
 
 class GoodsView(viewsets.ModelViewSet):
     permission_classes = (GoodsAccessPolicy, )
-    queryset = Good.objects.order_by('id')
+    queryset = Good.objects
     serializer_class = GoodSerializer
+    ordering = ['id']

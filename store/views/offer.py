@@ -31,8 +31,27 @@ class OffersAccessPolicy(AccessPolicy):
                 or request.user.has_perm('store.change_offer')
                 or request.user.has_perm('store.delete_offer'))
 
+    @classmethod
+    def scope_queryset(cls, request, view, action, qs):
+        if not cls.can_moderate_offer(request, view, action):
+            qs = qs.filter(enabled=True)
+
+        return qs
+
 
 class OffersView(viewsets.ModelViewSet):
     permission_classes = (OffersAccessPolicy, )
-    queryset = Offer.objects.order_by('id')
+    queryset = Offer.objects
     serializer_class = OfferSerializer
+    filterset_fields = ['enabled']
+    ordering_fields = ['price']
+    ordering = ['id']
+
+    @property
+    def access_policy(self):
+        return self.permission_classes[0]
+
+    def get_queryset(self):
+        return self.access_policy.scope_queryset(
+            self.request, self, self.action, super().get_queryset()
+        )

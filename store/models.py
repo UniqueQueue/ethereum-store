@@ -13,7 +13,8 @@ class Good(models.Model):
 class Offer(models.Model):
     good = models.ForeignKey(verbose_name=_('Good'), to=Good,
                              related_name='offers', on_delete=models.CASCADE)
-    price = models.FloatField(verbose_name=_('Price'))
+    price = models.DecimalField(verbose_name=_('Price'), max_digits=12, decimal_places=6)
+    enabled = models.BooleanField(verbose_name=_('Enabled'), default=True)
 
     class Meta:
         verbose_name = _('Offer')
@@ -26,10 +27,13 @@ class Purchase(models.Model):
 
     class Meta:
         verbose_name = _('Purchase')
-        unique_together = ('good', 'price')
+
+    @staticmethod
+    def from_offer(offer):
+        return Purchase(good=offer.good, price=offer.price)
 
 
-CAN_BUY_WITHOUT_REGISTRATION = True
+ANONYMOUS_CAN_BUY = True
 
 
 class Order(models.Model):
@@ -41,8 +45,8 @@ class Order(models.Model):
         FINISHED = 'FI', _('Finished')
 
     user = models.ForeignKey(verbose_name=_('Buyer'), to=settings.AUTH_USER_MODEL,
-                             related_name='orders', null=CAN_BUY_WITHOUT_REGISTRATION,
-                             db_constraint=not CAN_BUY_WITHOUT_REGISTRATION, on_delete=models.DO_NOTHING)
+                             related_name='orders', null=ANONYMOUS_CAN_BUY,
+                             db_constraint=not ANONYMOUS_CAN_BUY, on_delete=models.DO_NOTHING)
     email = models.EmailField(verbose_name=_('E-Mail'), db_index=True)
     purchases = models.ManyToManyField(Purchase, related_name='orders')
     status = models.TextField(max_length=2, choices=Status.choices)

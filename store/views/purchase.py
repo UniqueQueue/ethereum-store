@@ -22,5 +22,6 @@ class PurchaseAccessPolicy(AccessPolicy):
 
 class PurchaseView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (PurchaseAccessPolicy,)
-    queryset = Purchase.objects.order_by('id')
+    queryset = Purchase.objects
     serializer_class = PurchaseSerializer
+    ordering = ['id']
