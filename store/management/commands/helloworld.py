@@ -1,12 +1,10 @@
-from datetime import datetime, timedelta
-
-import pytz
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
 from store.models import Good, Offer, Purchase
-from store.models import OrderStatus, Order
+from store.models import Order
+from store.initialization import delete_models, populate_models
 
 
 def _get_groups():
@@ -77,24 +75,14 @@ def _create_purchases(*, goods):
 def _create_orders(*, users, purchases):
     orders = {}
 
-    orders['order 1'], created = Order.objects.get_or_create(user=users['buyer'], email='buyer@mail.ru')
+    orders['order 1'], created = Order.objects.get_or_create(
+        user=users['buyer'], email='buyer@mail.ru', status=Order.Status.DRAFT)
     orders['order 1'].purchases.set([purchases['purchase_1'], purchases['purchase_2']])
-    statuses = [OrderStatus(status=OrderStatus.Status.DRAFT, timestamp=datetime.now(tz=pytz.UTC) - timedelta(hours=1)),
-                OrderStatus(status=OrderStatus.Status.PROCESSING, timestamp=datetime.now(tz=pytz.UTC) - timedelta(minutes=30)),
-                OrderStatus(status=OrderStatus.Status.FINISHED, timestamp=datetime.now(tz=pytz.UTC) - timedelta(minutes=10)),
-                ]
-    orders['order 1'].statuses.get_queryset().delete()
-    orders['order 1'].statuses.set(statuses, bulk=False)
     orders['order 1'].save()
 
-    orders['order 2'], created = Order.objects.get_or_create(user=users['moderator'], email='moderator@mail.ru')
+    orders['order 2'], created = Order.objects.get_or_create(
+        user=users['moderator'], email='moderator@mail.ru', status=Order.Status.PROCESSING)
     orders['order 2'].purchases.set([purchases['purchase_3'], purchases['purchase_4']])
-    statuses = [OrderStatus(status=OrderStatus.Status.DRAFT, timestamp=datetime.now(tz=pytz.UTC) - timedelta(hours=1)),
-                OrderStatus(status=OrderStatus.Status.PROCESSING, timestamp=datetime.now(tz=pytz.UTC) - timedelta(minutes=30)),
-                OrderStatus(status=OrderStatus.Status.CANCELED, timestamp=datetime.now(tz=pytz.UTC) - timedelta(minutes=10)),
-                ]
-    orders['order 2'].statuses.get_queryset().delete()
-    orders['order 2'].statuses.set(statuses, bulk=False)
     orders['order 2'].save()
 
     return orders
@@ -111,6 +99,9 @@ class Command(BaseCommand):
             parser.add_argument(*args, **kwargs)
 
     def handle(self, *args, **options):
+        delete_models(self)
+        populate_models(self)
+
         groups = _get_groups()
         users = _create_users(groups=groups)
         goods = _create_goods()

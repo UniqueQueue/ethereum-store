@@ -1,4 +1,6 @@
 django
 djangorestframework
 django-oauth-toolkit
+django-filter
+drf-yasg
 drf-access-policy

@@ -37,8 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     'rest_framework',
     'oauth2_provider',
+    'drf_yasg',
     'store',
 ]
 
@@ -138,9 +140,11 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
     'DEFAULT_PAGINATION_CLASS': 'application.pagination.PageSizeNumberPagination',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'PAGE_SIZE': 10,
 }
+
+AUTHENTICATION_BACKENDS = ['application.authentication.AnonymousUserBackend']
+ANONYMOUS_USER_NAME = 'AnonymousUser'
+

@@ -7,5 +7,5 @@ class StoreConfig(AppConfig):
     name = 'store'
 
     def ready(self):
-        from .signals import populate_models
+        from .initialization import populate_models
         post_migrate.connect(populate_models, sender=self)
