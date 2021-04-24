@@ -6,13 +6,11 @@ from django.db import IntegrityError
 from rest_access_policy import AccessPolicy
 from rest_framework import viewsets
 
+from store.const import ORDER_IDS_SESSION_PARAM_NAME
 from store.models import Order
 from store.serializers import MyOrderSerializer
 
 log = logging.getLogger(__name__)
-
-
-ORDER_IDS_SESSION_PARAM_NAME = 'order_ids'
 
 
 class MyOrderAccessPolicy(AccessPolicy):

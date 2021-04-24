@@ -30,6 +30,7 @@ class Purchase(models.Model):
 
     class Meta:
         verbose_name = _('Purchase')
+        permissions = [('view_my_purchase', _('View my purchases'))]
 
     @staticmethod
     def from_offer(offer):

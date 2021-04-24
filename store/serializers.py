@@ -14,6 +14,7 @@ class GoodSerializer(serializers.ModelSerializer):
 
 class OfferSerializer(serializers.ModelSerializer):
     good = GoodSerializer(read_only=True)
+    good_id = serializers.IntegerField()
 
     class Meta:
         model = Offer
@@ -22,6 +23,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
 class PurchaseSerializer(serializers.ModelSerializer):
     good = GoodSerializer(read_only=True)
+    good_id = serializers.IntegerField()
 
     class Meta:
         model = Purchase

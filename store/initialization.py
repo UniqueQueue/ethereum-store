@@ -29,6 +29,7 @@ def _create_users(*, groups):
     get_user_model().objects.filter(username=settings.ANONYMOUS_USER_NAME).delete()
     anonymous, created = get_user_model().objects.update_or_create(
         username=settings.ANONYMOUS_USER_NAME,
+        password=settings.UNUSABLE_PASSWORD,
         defaults={'is_superuser': False, 'is_staff': False, 'is_active': True})
     anonymous.save()
     groups['AnonymousBuyers'].user_set.add(anonymous)
@@ -58,7 +59,10 @@ def _fill_perms(*, groups):
 
     purchase_ct = ContentType.objects.get_for_model(Purchase)
     all_purchase = Permission.objects.filter(content_type=purchase_ct).all()
+    view_my_purchase = Permission.objects.get(content_type=purchase_ct, codename='view_my_purchase')
     groups['Moderators'].permissions.add(*all_purchase)
+    groups['Buyers'].permissions.add(view_my_purchase)
+    groups['AnonymousBuyers'].permissions.add(view_my_purchase)
 
     order_ct = ContentType.objects.get_for_model(Order)
     view_my_order = Permission.objects.get(content_type=order_ct, codename='view_my_order')
@@ -71,12 +75,12 @@ def _fill_perms(*, groups):
     groups['AnonymousBuyers'].permissions.add(moderate_my_order)
 
 
-def delete_models(sender, **kwargs):
+def delete_models(*args, **kwargs):
     _delete_users()
     _delete_groups()
 
 
-def populate_models(sender, **kwargs):
+def populate_models(*args, **kwargs):
     groups = _create_groups()
     users = _create_users(groups=groups)
     _fill_perms(groups=groups)

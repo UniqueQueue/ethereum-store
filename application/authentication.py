@@ -7,6 +7,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.db.models.signals import pre_save
 from django.dispatch.dispatcher import receiver
+from django.contrib.auth import get_user_model
 
 
 class AnonymousUserBackend(ModelBackend):
@@ -15,7 +16,7 @@ class AnonymousUserBackend(ModelBackend):
         if user_obj.is_anonymous:
             if not hasattr(user_obj, '_perm_cache'):
                 anon_user_name = settings.ANONYMOUS_USER_NAME
-                anon_user = User.objects.get(username=anon_user_name)
+                anon_user = get_user_model().objects.get(username=anon_user_name)
                 user_obj._perm_cache = self.get_all_permissions(anon_user, obj=obj)
             return user_obj._perm_cache
         return super(AnonymousUserBackend, self).get_all_permissions(user_obj, obj=obj)
@@ -34,5 +35,5 @@ class AnonymousUserBackend(ModelBackend):
 @receiver(pre_save, sender=User)
 def disable_anon_user_password_save(sender, **kwargs):
     instance = kwargs['instance']
-    if instance.username == settings.ANONYMOUS_USER_NAME:
-        raise ValueError("Can't set anonymous user password")
+    if instance.username == settings.ANONYMOUS_USER_NAME and instance.password != settings.UNUSABLE_PASSWORD:
+        raise ValueError("Can't set anonymous user password to something other than unusable password")
