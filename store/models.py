@@ -18,12 +18,15 @@ class Offer(models.Model):
 
     class Meta:
         verbose_name = _('Offer')
+        unique_together = ('good', 'price')
 
 
 class Purchase(models.Model):
     good = models.ForeignKey(verbose_name=_('Good'), to=Good,
                              related_name='purchases', on_delete=models.CASCADE)
     price = models.FloatField(verbose_name=_('Price'))
+    order = models.ForeignKey(verbose_name=_('Order'), to='Order',
+                              related_name='purchases', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = _('Purchase')
@@ -48,8 +51,7 @@ class Order(models.Model):
                              related_name='orders', null=ANONYMOUS_CAN_BUY,
                              db_constraint=not ANONYMOUS_CAN_BUY, on_delete=models.DO_NOTHING)
     email = models.EmailField(verbose_name=_('E-Mail'), db_index=True)
-    purchases = models.ManyToManyField(Purchase, related_name='orders')
-    status = models.TextField(max_length=2, choices=Status.choices)
+    status = models.TextField(choices=Status.choices, default=Status.DRAFT, max_length=2, db_index=True)
 
     class Meta:
         verbose_name = _('Order')

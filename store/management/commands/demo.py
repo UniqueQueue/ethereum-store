@@ -1,4 +1,4 @@
-from itertools import count
+from itertools import count, cycle
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -63,34 +63,34 @@ def _create_offers(*, goods):
     return offers
 
 
-def _create_purchases(*, goods):
-    purchases = {}
-
-    for idx in range(1, 16 + 1):
-        good = goods[f'good_{idx}']
-        price = idx
-        purchases[f'purchase_{idx}'], created = Purchase.objects.get_or_create(good=good, price=price)
-
-    return purchases
-
-
-def _create_orders(*, users, purchases):
+def _create_orders(*, users):
     orders = {}
 
-    pidx = count(1)  # purchase index
     for idx, status in enumerate(Order.Status.values):
-        orders[f'order {idx}'], created = Order.objects.get_or_create(
+        orders[f'order_{idx}'], created = Order.objects.get_or_create(
             user=users['buyer'], email='buyer@mail.ru', status=status)
-        orders[f'order {idx}'].purchases.set([purchases[f'purchase_{next(pidx)}'], purchases[f'purchase_{next(pidx)}']])
-        orders[f'order {idx}'].save()
+        orders[f'order_{idx}'].save()
 
-    for idx, status in enumerate(Order.Status.values):
-        orders[f'order {idx}'], created = Order.objects.get_or_create(
+    for idx, status in enumerate(Order.Status.values, idx):
+        orders[f'order_{idx}'], created = Order.objects.get_or_create(
             user=users['moderator'], email='moderator@mail.ru', status=status)
-        orders[f'order {idx}'].purchases.set([purchases[f'purchase_{next(pidx)}'], purchases[f'purchase_{next(pidx)}']])
-        orders[f'order {idx}'].save()
+        orders[f'order_{idx}'].save()
 
     return orders
+
+
+def _create_purchases(*, goods, orders):
+    purchases = {}
+
+    good_it = cycle(goods.values())
+    idx_it = count(1)
+
+    for order in orders.values():
+        good = next(good_it)
+        idx = next(idx_it)
+        purchases[f'purchase_{idx}'], created = Purchase.objects.get_or_create(good=good, price=idx, order=order)
+
+    return purchases
 
 
 class Command(BaseCommand):
@@ -111,5 +111,5 @@ class Command(BaseCommand):
         users = _create_users(groups=groups)
         goods = _create_goods()
         offers = _create_offers(goods=goods)
-        purchases = _create_purchases(goods=goods)
-        orders = _create_orders(users=users, purchases=purchases)
+        orders = _create_orders(users=users)
+        purchases = _create_purchases(goods=goods, orders=orders)

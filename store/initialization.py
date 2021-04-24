@@ -10,11 +10,8 @@ from store.models import Good, Offer, Purchase, Order
 def _create_groups():
     groups = {}
 
-    Group.objects.filter(name='Moderators').delete()
     groups['Moderators'], created = Group.objects.get_or_create(name='Moderators')
-    Group.objects.filter(name='Buyers').delete()
     groups['Buyers'], created = Group.objects.get_or_create(name='Buyers')
-    Group.objects.filter(name='AnonymousBuyers').delete()
     groups['AnonymousBuyers'], created = Group.objects.get_or_create(name='AnonymousBuyers')
 
     return groups
@@ -70,6 +67,8 @@ def _fill_perms(*, groups):
     groups['Moderators'].permissions.add(*all_order)
     groups['Buyers'].permissions.add(view_my_order)
     groups['Buyers'].permissions.add(moderate_my_order)
+    groups['AnonymousBuyers'].permissions.add(view_my_order)
+    groups['AnonymousBuyers'].permissions.add(moderate_my_order)
 
 
 def delete_models(sender, **kwargs):

@@ -81,7 +81,7 @@ class MyOrderView(viewsets.ModelViewSet):
         for _ in range(settings.ANONYMOUS_ORDER_ID_GENERATION_ITERATIONS):
             try:
                 random.seed()
-                serializer.instance.id = random.randint(*settings.ANONYMOUS_ORDER_ID_GENERATION_RANGE)
+                serializer.validated_data['id'] = random.randint(*settings.ANONYMOUS_ORDER_ID_GENERATION_RANGE)
                 super().perform_create(serializer)
                 break
             except IntegrityError:

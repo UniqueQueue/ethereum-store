@@ -38,7 +38,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class MyOrderSerializer(serializers.ModelSerializer):
     purchases = PurchaseSerializer(many=True, read_only=True)
-    offer_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    offer_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False, write_only=True)
 
     class Meta:
         model = Order
@@ -65,9 +65,16 @@ class MyOrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         offer_ids = validated_data.pop('offer_ids')
         offers = Offer.objects.filter(id__in=offer_ids).all()
-        purchases = map(Purchase.from_offer, offers)
-        purchases = Purchase.objects.bulk_create(purchases)
 
         instance = super().create(validated_data)
-        instance.purchases.set(purchases)
+        user = self.context['request'].user
+        if not user.is_anonymous:
+            instance.user = user
+        instance.save()
+
+        purchases = [Purchase.from_offer(offer) for offer in offers]
+        for p in purchases:
+            p.order = instance
+            p.save()
+
         return instance
