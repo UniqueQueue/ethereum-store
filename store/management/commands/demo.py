@@ -17,16 +17,18 @@ def _get_groups():
 def _create_users(*, groups):
     users = {}
 
+    eth_address = '0' * 42
+
     admin, created = get_user_model().objects.update_or_create(
         username='admin',
-        defaults={'is_superuser': True, 'is_staff': True, 'is_active': True})
+        defaults={'is_superuser': True, 'is_staff': True, 'is_active': True, 'eth_address': eth_address})
     admin.set_password('admin')
     admin.save()
     users['admin'] = admin
 
     moderator, created = get_user_model().objects.update_or_create(
         username='moderator',
-        defaults={'is_superuser': False, 'is_staff': True, 'is_active': True})
+        defaults={'is_superuser': False, 'is_staff': True, 'is_active': True, 'eth_address': eth_address})
     moderator.set_password('moderator')
     moderator.save()
     groups['Moderators'].user_set.add(moderator)
@@ -34,7 +36,7 @@ def _create_users(*, groups):
 
     buyer, created = get_user_model().objects.update_or_create(
         username='buyer',
-        defaults={'is_superuser': False, 'is_staff': True, 'is_active': True})
+        defaults={'is_superuser': False, 'is_staff': True, 'is_active': True, 'eth_address': eth_address})
     buyer.set_password('buyer')
     buyer.save()
     groups['Buyers'].user_set.add(buyer)
@@ -68,12 +70,12 @@ def _create_orders(*, users):
 
     for idx, status in enumerate(Order.Status.values):
         orders[f'order_{idx}'], created = Order.objects.get_or_create(
-            user=users['buyer'], email='buyer@mail.ru', status=status)
+            user=users['buyer'], email='buyer@mail.ru', eth_address='0' * 42, status=status)
         orders[f'order_{idx}'].save()
 
     for idx, status in enumerate(Order.Status.values, idx):
         orders[f'order_{idx}'], created = Order.objects.get_or_create(
-            user=users['moderator'], email='moderator@mail.ru', status=status)
+            user=users['moderator'], email='moderator@mail.ru', eth_address='0' * 42, status=status)
         orders[f'order_{idx}'].save()
 
     return orders

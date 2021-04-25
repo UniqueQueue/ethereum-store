@@ -3,7 +3,14 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from .models import Good, Offer, Purchase
-from .models import Order
+from .models import Order, Settings
+
+
+class SettingsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Settings
+        fields = '__all__'
 
 
 class GoodSerializer(serializers.ModelSerializer):
@@ -56,7 +63,7 @@ class MyOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'email', 'purchases', 'status', 'offer_ids']
+        fields = ['id', 'email', 'eth_address', 'purchases', 'status', 'offer_ids']
         extra_kwargs = {'status': {'read_only': True}}
 
     @staticmethod

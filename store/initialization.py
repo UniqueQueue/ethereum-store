@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
-from store.models import Good, Offer, Purchase, Order
+from store.models import Good, Offer, Purchase, Order, Settings
 
 
 def _create_groups():
@@ -43,6 +43,10 @@ def _delete_users():
 
 
 def _fill_perms(*, groups):
+    settings_ct = ContentType.objects.get_for_model(Settings)
+    all_settings = Permission.objects.filter(content_type=settings_ct).all()
+    groups['Moderators'].permissions.add(*all_settings)
+
     good_ct = ContentType.objects.get_for_model(Good)
     view_good = Permission.objects.get(content_type=good_ct, codename='view_good')
     all_good = Permission.objects.filter(content_type=good_ct).all()
@@ -75,6 +79,12 @@ def _fill_perms(*, groups):
     groups['AnonymousBuyers'].permissions.add(moderate_my_order)
 
 
+def _fill_settings():
+    a, _ = Settings.objects.get_or_create(name=Settings.EMAIL_SUBJECT, value='subject')
+    Settings.objects.get_or_create(name=Settings.EMAIL_BODY, value='body')
+    Settings.objects.get_or_create(name=Settings.EMAIL_FROM, value='mail@mail.ru')
+
+
 def delete_models(*args, **kwargs):
     _delete_users()
     _delete_groups()
@@ -84,3 +94,11 @@ def populate_models(*args, **kwargs):
     groups = _create_groups()
     users = _create_users(groups=groups)
     _fill_perms(groups=groups)
+    _fill_settings()
+
+
+def handle_new_buyer(sender, user, request, **kwargs):
+    buyers = Group.objects.get(name='Buyers')
+    buyers.user_set.add(user)
+    user.is_staff = True
+    user.save()

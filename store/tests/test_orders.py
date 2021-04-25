@@ -29,13 +29,13 @@ class OrdersTest(PermissionTest):
         self.good2, created = Good.objects.get_or_create(name='good2')
         self.offer, created = Offer.objects.get_or_create(good=self.good, price=1)
 
-        self.user_order, created = Order.objects.get_or_create(user=self.user, email='test@mail.ru')
+        self.user_order, created = Order.objects.get_or_create(user=self.user, email='test@mail.ru', eth_address='0' * 42)
         self.user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.user_order)
 
-        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru')
+        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru', eth_address='0' * 42)
         self.other_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.other_user_order)
 
-        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru')
+        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru', eth_address='0' * 42)
         self.anon_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.anon_user_order)
 
     @parameterized.expand([
@@ -81,6 +81,7 @@ class OrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": order.email,
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": purchase.id,
@@ -125,6 +126,7 @@ class OrdersTest(PermissionTest):
             url = reverse('store:orders-detail', kwargs={"pk": order.id})
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "good_id": self.good2.id,
@@ -151,6 +153,7 @@ class OrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -214,10 +217,10 @@ class AnonymousOrdersTest(PermissionTest):
         self.good2, created = Good.objects.get_or_create(name='good2')
         self.offer, created = Offer.objects.get_or_create(good=self.good, price=1)
 
-        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru')
+        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru', eth_address='0' * 42)
         self.other_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.other_user_order)
 
-        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru')
+        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru', eth_address='0' * 42)
         self.anon_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.anon_user_order)
 
     @parameterized.expand([
@@ -261,6 +264,7 @@ class AnonymousOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": order.email,
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": purchase.id,
@@ -303,6 +307,7 @@ class AnonymousOrdersTest(PermissionTest):
             url = reverse('store:orders-detail', kwargs={"pk": order.id})
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "good_id": self.good2.id,
@@ -329,6 +334,7 @@ class AnonymousOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,

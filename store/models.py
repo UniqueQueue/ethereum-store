@@ -1,6 +1,32 @@
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator, MinLengthValidator, MaxLengthValidator
 from django.db import models
+from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy as _
+from django_fsm import FSMField, transition
+
+from .utils import send_confirmation
+
+
+class ETHAddress(models.TextField):
+    ADDRESS_LENGTH = 42
+    default_validators = [RegexValidator(r'[0-9abcdefABCDEF]*'),
+                          MinLengthValidator(ADDRESS_LENGTH),
+                          MaxLengthValidator(ADDRESS_LENGTH)]
+
+
+class User(AbstractUser):
+    eth_address = ETHAddress(verbose_name=_('Ethereum Address'))
+
+
+class Settings(models.Model):
+    EMAIL_SUBJECT = 'Email Subject'
+    EMAIL_BODY = 'Email Body'
+    EMAIL_FROM = 'Email From'
+
+    name = models.TextField(verbose_name=_('Name'), unique=True)
+    value = models.TextField(verbose_name=_('Value'))
 
 
 class Good(models.Model):
@@ -51,9 +77,16 @@ class Order(models.Model):
                              related_name='orders', null=ANONYMOUS_CAN_BUY,
                              db_constraint=not ANONYMOUS_CAN_BUY, on_delete=models.DO_NOTHING)
     email = models.EmailField(verbose_name=_('E-Mail'), db_index=True)
-    status = models.TextField(choices=Status.choices, default=Status.DRAFT, max_length=2, db_index=True)
+    eth_address = ETHAddress(verbose_name=_('Ethereum Address'), db_index=True)
+    status = FSMField(verbose_name=_('status'), choices=Status.choices,
+                      default=Status.DRAFT, max_length=2, db_index=True)
 
     class Meta:
         verbose_name = _('Order')
         permissions = [('view_my_order', _('View my orders')),
                        ('moderate_my_order', _('Moderate my orders'))]
+
+    @transition(field='state', source='+', target=Status.FINISHED,
+                permission='store.moderate_order')
+    def finish(self):
+        send_confirmation(self.email, model_to_dict(self.user))

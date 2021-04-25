@@ -3,12 +3,12 @@ import random
 
 from django.conf import settings
 from django.db import IntegrityError
+from django.db.models import Q
 from rest_access_policy import AccessPolicy
 from rest_framework import viewsets
 
 from store.const import ORDER_IDS_SESSION_PARAM_NAME
 from store.models import Order
-from django.db.models import Q
 from store.serializers import MyOrderSerializer
 
 log = logging.getLogger(__name__)
@@ -53,13 +53,17 @@ class MyOrderAccessPolicy(AccessPolicy):
                 qs = qs.filter(Q(user=request.user) | Q(id__in=order_ids, user=None))
 
             else:
-
                 qs = qs.filter(Q(user=request.user) | Q(user=None))
 
         return qs
 
 
-class MyOrderView(viewsets.ModelViewSet):
+class MyOrderView(viewsets.mixins.CreateModelMixin,
+                  viewsets.mixins.RetrieveModelMixin,
+                  viewsets.mixins.UpdateModelMixin,
+                  viewsets.mixins.ListModelMixin,
+                  viewsets.GenericViewSet):
+
     permission_classes = (MyOrderAccessPolicy,)
     queryset = Order.objects
     serializer_class = MyOrderSerializer

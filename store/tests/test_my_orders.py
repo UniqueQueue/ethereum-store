@@ -32,13 +32,13 @@ class MyOrdersTest(PermissionTest):
         self.offer, created = Offer.objects.get_or_create(good=self.good, price=1)
         self.offer2, created = Offer.objects.get_or_create(good=self.good2, price=1)
 
-        self.user_order, created = Order.objects.get_or_create(user=self.user, email='test@mail.ru')
+        self.user_order, created = Order.objects.get_or_create(user=self.user, email='test@mail.ru', eth_address='0' * 42)
         self.user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.user_order)
 
-        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru')
+        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru', eth_address='0' * 42)
         self.other_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.other_user_order)
 
-        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru')
+        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru', eth_address='0' * 42)
         self.anon_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.anon_user_order)
 
     @parameterized.expand([
@@ -92,6 +92,7 @@ class MyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": order.email,
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": purchase.id,
@@ -117,6 +118,7 @@ class MyOrdersTest(PermissionTest):
             url = reverse('store:buyer-orders-list')
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "offer_ids": [self.offer.id],
             }
             response = self.client.post(url, data=data, format='json')
@@ -137,6 +139,7 @@ class MyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order_id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -169,6 +172,7 @@ class MyOrdersTest(PermissionTest):
             url = reverse('store:buyer-orders-detail', kwargs={"pk": order.id})
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "offer_ids": [self.offer2.id],
             }
             response = self.client.put(url, data=data, format='json')
@@ -188,6 +192,7 @@ class MyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -211,7 +216,7 @@ class MyOrdersTest(PermissionTest):
         (["store.moderate_my_order"], 404, 'other_user'),
         (["store.moderate_my_order"], 200, 'anon_user'),
     ])
-    def test_update(self, perms, status_code, username):
+    def test_partial_update(self, perms, status_code, username):
         user = getattr(self, username)
         order = getattr(self, f'{username}_order')
 
@@ -238,6 +243,7 @@ class MyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -253,16 +259,16 @@ class MyOrdersTest(PermissionTest):
                 "status": Order.Status.DRAFT.value,
             })
 
-    # @parameterized.expand([
-    #     ([], 403),
-    #     (["store.moderate_my_order"], 404),
-    # ])
-    # def test_destroy(self, perms, status_code):
-    #     with self._set_perms(self.user, perms):
-    #
-    #         url = reverse('store:buyer-orders-detail', kwargs={"pk": self.anon_user_order.id})
-    #         response = self.client.delete(url)
-    #         self.assertEqual(status_code, response.status_code, response.content)
+    @parameterized.expand([
+        ([], 403),
+        (["store.moderate_my_order"], 403),
+    ])
+    def test_destroy(self, perms, status_code):
+        with self._set_perms(self.user, perms):
+
+            url = reverse('store:buyer-orders-detail', kwargs={"pk": self.user_order.id})
+            response = self.client.delete(url)
+            self.assertEqual(status_code, response.status_code, response.content)
 
 
 class AnonymousMyOrdersTest(PermissionTest):
@@ -281,10 +287,10 @@ class AnonymousMyOrdersTest(PermissionTest):
         self.offer, created = Offer.objects.get_or_create(good=self.good, price=1)
         self.offer2, created = Offer.objects.get_or_create(good=self.good2, price=1)
 
-        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru')
+        self.other_user_order, created = Order.objects.get_or_create(user=self.other_user, email='test2@mail.ru', eth_address='0' * 42)
         self.other_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.other_user_order)
 
-        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru')
+        self.anon_user_order, created = Order.objects.get_or_create(user=None, email='test3@mail.ru', eth_address='0' * 42)
         self.anon_user_purchase, created = Purchase.objects.get_or_create(good=self.good, price=1, order=self.anon_user_order)
 
     @parameterized.expand([
@@ -336,6 +342,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": order.email,
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": purchase.id,
@@ -361,6 +368,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             url = reverse('store:buyer-orders-list')
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "offer_ids": [self.offer.id],
             }
             response = self.client.post(url, data=data, format='json')
@@ -381,6 +389,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order_id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -414,6 +423,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             url = reverse('store:buyer-orders-detail', kwargs={"pk": order.id})
             data = {
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "offer_ids": [self.offer2.id],
             }
             response = self.client.put(url, data=data, format='json')
@@ -433,6 +443,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": '1' * 42,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -481,6 +492,7 @@ class AnonymousMyOrdersTest(PermissionTest):
             self.assertDictEqual(results, {
                 "id": order.id,
                 "email": "new@mail.ru",
+                "eth_address": order.eth_address,
                 "purchases": [
                     {
                         "id": mock.ANY,
@@ -496,13 +508,13 @@ class AnonymousMyOrdersTest(PermissionTest):
                 "status": Order.Status.DRAFT.value,
             })
 
-    # @parameterized.expand([
-    #     ([], 401),
-    #     (["store.moderate_my_order"], 401),
-    # ])
-    # def test_destroy(self, perms, status_code):
-    #     with self._set_perms(self.anon_user, perms):
-    #
-    #         url = reverse('store:buyer-orders-detail', kwargs={"pk": self.anon_user_order.id})
-    #         response = self.client.delete(url)
-    #         self.assertEqual(status_code, response.status_code, response.content)
+    @parameterized.expand([
+        ([], 401),
+        (["store.moderate_my_order"], 401),
+    ])
+    def test_destroy(self, perms, status_code):
+        with self._set_perms(self.anon_user, perms):
+
+            url = reverse('store:buyer-orders-detail', kwargs={"pk": self.anon_user_order.id})
+            response = self.client.delete(url)
+            self.assertEqual(status_code, response.status_code, response.content)

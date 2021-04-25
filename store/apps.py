@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
+from django_registration import signals
 
 
 class StoreConfig(AppConfig):
@@ -7,5 +8,6 @@ class StoreConfig(AppConfig):
     name = 'store'
 
     def ready(self):
-        from .initialization import populate_models
+        from .initialization import populate_models, handle_new_buyer
         post_migrate.connect(populate_models, sender=self)
+        signals.user_registered.connect(handle_new_buyer)

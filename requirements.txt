@@ -12,6 +12,8 @@ cffi==1.14.5
     # via cryptography
 chardet==4.0.0
     # via requests
+confusable-homoglyphs==3.2.0
+    # via django-registration
 coreapi==2.3.3
     # via drf-yasg
 coreschema==0.0.4
@@ -22,13 +24,18 @@ cryptography==3.4.7
     # via jwcrypto
 django-filter==2.4.0
     # via -r requirements.in
+django-fsm==2.7.1
+    # via -r requirements.in
 django-oauth-toolkit==1.5.0
+    # via -r requirements.in
+django-registration==3.1.2
     # via -r requirements.in
 django==3.2
     # via
     #   -r requirements.in
     #   django-filter
     #   django-oauth-toolkit
+    #   django-registration
     #   djangorestframework
     #   drf-yasg
 djangorestframework==3.12.4
@@ -61,6 +68,8 @@ pyparsing==2.4.7
     # via
     #   drf-access-policy
     #   packaging
+python-decouple==3.4
+    # via -r requirements.in
 pytz==2021.1
     # via django
 requests==2.25.1

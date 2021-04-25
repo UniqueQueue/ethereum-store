@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
 from pathlib import Path
+
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t5r%8%tdx7tq$sw!q4h=@bc-6qg*+xm)e$yl77lc^dzrwov7ql'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-t5r%8%tdx7tq$sw!q4h=@bc-6qg*+xm)e$yl77lc^dzrwov7ql')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -75,14 +76,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'application.wsgi.application'
 
+AUTH_USER_MODEL = 'store.User'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': config('DJANGO_LOG_LEVEL', default='ERROR'),
+        },
+    },
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': config('DB_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': config('DB_NAME', default=BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -143,7 +162,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'application.pagination.PageSizeNumberPagination',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend',
                                 'rest_framework.filters.OrderingFilter'],
-    'PAGE_SIZE': 30,
+    'PAGE_SIZE': config('PAGE_SIZE', default=30, cast=int),
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
@@ -155,8 +174,14 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = ['application.authentication.AnonymousUserBackend']
-ANONYMOUS_USER_NAME = 'AnonymousUser'
-UNUSABLE_PASSWORD = ''
+ANONYMOUS_USER_NAME = config('ANONYMOUS_USER_NAME', default='AnonymousUser')
+UNUSABLE_PASSWORD = config('UNUSABLE_PASSWORD', default='')
 
-ANONYMOUS_ORDER_ID_GENERATION_ITERATIONS = 20
-ANONYMOUS_ORDER_ID_GENERATION_RANGE = (1000_000, 9000_000)
+ANONYMOUS_ORDER_ID_GENERATION_ITERATIONS = config('ANONYMOUS_ORDER_ID_GENERATION_ITERATIONS', default=20, cast=int)
+ANONYMOUS_ORDER_ID_GENERATION_RANGE = config('ANONYMOUS_ORDER_ID_GENERATION_RANGE', default='1000_000, 9000_000', cast=Csv(int))
+
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)

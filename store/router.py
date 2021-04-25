@@ -5,9 +5,15 @@ from .views.my_order import MyOrderView
 from .views.offer import OffersView
 from .views.order import OrderView
 from .views.purchase import PurchaseView
+from .views.settings import SettingsView
 
 app_name = 'store'
 store_api_router = routers.SimpleRouter()
+store_api_router.register(
+    'settings',
+    SettingsView,
+    basename='settings'
+)
 store_api_router.register(
     'goods',
     GoodsView,

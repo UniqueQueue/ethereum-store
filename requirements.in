@@ -2,5 +2,8 @@ django
 djangorestframework
 django-oauth-toolkit
 django-filter
+django-fsm
+django-registration
 drf-yasg
 drf-access-policy
+python-decouple
