@@ -27,12 +27,14 @@ class OrderAccessPolicy(AccessPolicy):
 
     @staticmethod
     def can_moderate_order(request, view, action) -> bool:
-        return (request.user.has_perm('store.add_order')
-                or request.user.has_perm('store.change_order')
-                or request.user.has_perm('store.delete_order'))
+        return request.user.has_perm('store.change_order')
 
 
-class OrderView(viewsets.ModelViewSet):
+class OrderView(viewsets.mixins.RetrieveModelMixin,
+                viewsets.mixins.UpdateModelMixin,
+                viewsets.mixins.ListModelMixin,
+                viewsets.GenericViewSet):
+
     permission_classes = (OrderAccessPolicy,)
     queryset = Order.objects
     serializer_class = OrderSerializer

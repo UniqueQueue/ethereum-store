@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
@@ -31,11 +32,22 @@ class PurchaseSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    purchases = PurchaseSerializer(many=True, read_only=True)
+    purchases = PurchaseSerializer(many=True)
 
     class Meta:
         model = Order
         fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        instance.purchases.get_queryset().delete()
+        purchases = validated_data.pop('purchases', [])
+        for purchase in purchases:
+            purchase['order'] = instance
+            PurchaseSerializer().create(purchase)
+
+        return super().update(instance, validated_data)
 
 
 class MyOrderSerializer(serializers.ModelSerializer):
@@ -49,21 +61,15 @@ class MyOrderSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def validate_offer_ids(ids):
-        offers = Offer.objects.filter(id__in=ids).all()
-        disabled = [offer for offer in offers if not offer.enabled]
+        offers_count = Offer.objects.filter(id__in=ids).count()
 
-        errors = [{'detail': _('Offer "%(good_name)s"(%(price)s ETH) is no more available.')
-                             % {'good_name': offer.good.name, 'price': offer.price}}
-                  for offer in disabled]
-
-        if len(offers) != len(ids):
-            errors.append({'detail': _('Some offers are not available anymore. Please refresh.')})
-
-        if errors:
-            raise serializers.ValidationError(detail=errors)
+        if offers_count != len(ids):
+            error = {'detail': _('Some offers are not available anymore. Please refresh.')}
+            raise serializers.ValidationError(detail=error)
 
         return ids
 
+    @transaction.atomic
     def create(self, validated_data):
         offer_ids = validated_data.pop('offer_ids')
         offers = Offer.objects.filter(id__in=offer_ids).all()
@@ -80,3 +86,19 @@ class MyOrderSerializer(serializers.ModelSerializer):
             p.save()
 
         return instance
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        offer_ids = validated_data.pop('offer_ids', [])
+
+        if offer_ids:
+            offers = Offer.objects.filter(id__in=offer_ids).all()
+
+            instance.purchases.get_queryset().delete()
+
+            purchases = [Purchase.from_offer(offer) for offer in offers]
+            for p in purchases:
+                p.order = instance
+                p.save()
+
+        return super().update(instance, validated_data)

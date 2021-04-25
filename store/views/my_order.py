@@ -8,6 +8,7 @@ from rest_framework import viewsets
 
 from store.const import ORDER_IDS_SESSION_PARAM_NAME
 from store.models import Order
+from django.db.models import Q
 from store.serializers import MyOrderSerializer
 
 log = logging.getLogger(__name__)
@@ -47,7 +48,13 @@ class MyOrderAccessPolicy(AccessPolicy):
                 qs = qs.filter(id__in=order_ids)
 
         else:
-            qs = qs.filter(user=request.user)
+            if action == 'list':
+                order_ids = request.session.get(ORDER_IDS_SESSION_PARAM_NAME, [])
+                qs = qs.filter(Q(user=request.user) | Q(id__in=order_ids, user=None))
+
+            else:
+
+                qs = qs.filter(Q(user=request.user) | Q(user=None))
 
         return qs
 

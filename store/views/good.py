@@ -18,13 +18,7 @@ class GoodsAccessPolicy(AccessPolicy):
             "principal": ["*"],
             "effect": "allow",
             "condition": "can_moderate_good",
-        },
-        {
-            "action": ["delete"],
-            "principal": ["*"],
-            "effect": "allow",
-            "condition": "can_delete_good",
-        },
+        }
     ]
 
     @staticmethod
@@ -36,12 +30,14 @@ class GoodsAccessPolicy(AccessPolicy):
         return (request.user.has_perm('store.add_good')
                 or request.user.has_perm('store.change_good'))
 
-    @staticmethod
-    def can_delete_good(request, view, action) -> bool:
-        return request.user.has_perm('store.delete_good')
 
+class GoodsView(viewsets.mixins.CreateModelMixin,
+                viewsets.mixins.RetrieveModelMixin,
+                viewsets.mixins.UpdateModelMixin,
+                viewsets.mixins.ListModelMixin,
+                viewsets.GenericViewSet):
+    """goods deletion is prohibited as it leads to deletion of linked orders from history"""
 
-class GoodsView(viewsets.ModelViewSet):
     permission_classes = (GoodsAccessPolicy, )
     queryset = Good.objects
     serializer_class = GoodSerializer

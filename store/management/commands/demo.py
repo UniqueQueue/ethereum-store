@@ -58,7 +58,7 @@ def _create_offers(*, goods):
     for idx in range(1, 10):
         good = goods[f'good_{idx}']
         price = idx
-        offers[f'offer_{idx}'], created = Offer.objects.get_or_create(good=good, price=price, enabled=idx > 5)
+        offers[f'offer_{idx}'], created = Offer.objects.get_or_create(good=good, price=price)
 
     return offers
 

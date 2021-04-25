@@ -14,7 +14,6 @@ class Offer(models.Model):
     good = models.ForeignKey(verbose_name=_('Good'), to=Good,
                              related_name='offers', on_delete=models.CASCADE)
     price = models.DecimalField(verbose_name=_('Price'), max_digits=12, decimal_places=6)
-    enabled = models.BooleanField(verbose_name=_('Enabled'), default=True)
 
     class Meta:
         verbose_name = _('Offer')
@@ -24,7 +23,7 @@ class Offer(models.Model):
 class Purchase(models.Model):
     good = models.ForeignKey(verbose_name=_('Good'), to=Good,
                              related_name='purchases', on_delete=models.CASCADE)
-    price = models.FloatField(verbose_name=_('Price'))
+    price = models.DecimalField(verbose_name=_('Price'), max_digits=12, decimal_places=6)
     order = models.ForeignKey(verbose_name=_('Order'), to='Order',
                               related_name='purchases', on_delete=models.CASCADE)
 
